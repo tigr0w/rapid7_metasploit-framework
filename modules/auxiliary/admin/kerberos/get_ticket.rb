@@ -38,7 +38,8 @@ class MetasploitModule < Msf::Auxiliary
           [ 'GET_TGS', { 'Description' => 'Request a Ticket-Granting-Service (TGS)' } ],
           [ 'GET_HASH', { 'Description' => 'Request a TGS to recover the NTLM hash' } ]
         ],
-        'DefaultAction' => 'GET_TGT'
+        'DefaultAction' => 'GET_TGT',
+        'AKA' => ['PKINIT']
       )
     )
 
@@ -90,7 +91,7 @@ class MetasploitModule < Msf::Auxiliary
 
   def validate_options
     if datastore['CERT_FILE'].present?
-      certificate = File.read(datastore['CERT_FILE'])
+      certificate = File.binread(datastore['CERT_FILE'])
       begin
         @pfx = OpenSSL::PKCS12.new(certificate, datastore['CERT_PASSWORD'] || '')
       rescue OpenSSL::PKCS12::PKCS12Error => e
@@ -141,7 +142,7 @@ class MetasploitModule < Msf::Auxiliary
   def run
     validate_options
 
-    send("action_#{action.name.downcase}")
+    result = send("action_#{action.name.downcase}")
 
     report_service(
       host: rhost,
@@ -150,6 +151,8 @@ class MetasploitModule < Msf::Auxiliary
       name: 'kerberos',
       info: "Module: #{fullname}, KDC for domain #{@realm}"
     )
+
+    result
   rescue ::Rex::ConnectionError => e
     elog('Connection error', error: e)
     fail_with(Failure::Unreachable, e.message)
@@ -275,6 +278,7 @@ class MetasploitModule < Msf::Auxiliary
     print_good("Found NTLM hash for #{@username}: #{ntlm_hash}")
 
     report_ntlm(ntlm_hash)
+    ntlm_hash
   end
 
   def report_ntlm(hash)

@@ -119,8 +119,7 @@ class PayloadSet < ModuleSet
 
     # Blow away anything that was cached but didn't exist during the
     # recalculation
-    self.delete_if do |k, v|
-      next if v == SymbolicModule
+    self.delete_if do |k, _v|
       !!(old_keys.include?(k) and not new_keys.include?(k))
     end
 
@@ -422,6 +421,28 @@ class PayloadSet < ModuleSet
     end
 
     payload_component_info
+  end
+
+  def load_payload_component(payload_type, refname)
+    payload_type_cache, folder_name = case payload_type
+                                      when Payload::Type::Single
+                                        [_singles, 'singles']
+                                      when Payload::Type::Stage
+                                        [_stages, 'stages']
+                                      when Payload::Type::Stager
+                                        [_stagers, 'stagers']
+                                      when Payload::Type::Adapter
+                                        [_adapters, 'adapters']
+                                      else
+                                        raise ArgumentError("Invalid payload type: #{payload_type}")
+                                      end
+
+    unless payload_type_cache[refname]
+      framework.configured_module_paths.each do |path|
+        framework.modules.try_load_module(path, "#{folder_name}/#{refname}", Msf::MODULE_PAYLOAD)
+      end
+    end
+    payload_type_cache[refname]
   end
 
   #

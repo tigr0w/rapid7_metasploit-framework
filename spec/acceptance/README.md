@@ -4,11 +4,14 @@ A slower test suite that ensures high level functionality works as expected,
 such as verifying msfconsole opens successfully, and can generate Meterpreter payloads,
 create handlers, etc.
 
-### Examples
+The test suite runs on the current host, so the Meterpreter runtimes should be available.
+There is no remote host support currently.
+
+### Meterpreter
 
 Useful environment variables:
-- `METERPRETER` - Filter the test suite for specific Meterpreter instances, example: `METERPRETER=java`
-- `METERPRETER_MODULE_TEST` - Filter the post modules to run, example: `METERPRETER_MODULE_TEST=test/meterpreter`
+- `SESSION` - Filter the test suite for specific Meterpreter instances, example: `SESSION=meterpreter/java`
+- `SESSION_MODULE_TEST` - Filter the post modules to run, example: `SESSION_MODULE_TEST=test/meterpreter`
 - `SPEC_HELPER_LOAD_METASPLOIT` - Skip RSpec from loading Metasploit framework and requiring a connected msfdb instance, example: `SPEC_HELPER_LOAD_METASPLOIT=false`
 
 Running Meterpreter test suite:
@@ -17,18 +20,96 @@ Running Meterpreter test suite:
 SPEC_OPTS='--tag acceptance' bundle exec rspec './spec/acceptance/meterpreter_spec.rb'
 ```
 
-Skip loading of Rails/Metasplotit with:
+Skip loading of Rails/Metasploit with:
 
 ```
 SPEC_OPTS='--tag acceptance' SPEC_HELPER_LOAD_METASPLOIT=false bundle exec rspec ./spec/acceptance
 ```
 
 Run a specific Meterpreter/module test Unix / Windows:
-```
-SPEC_OPTS='--tag acceptance' METERPRETER=php METERPRETER_MODULE_TEST=test/unix bundle exec rspec './spec/acceptance/meterpreter_spec.rb'
 
-$env:SPEC_OPTS='--tag acceptance'; $env:SPEC_HELPER_LOAD_METASPLOIT=$false; $env:METERPRETER = 'php'; bundle exec rspec './spec/acceptance/meterpreter_spec.rb'
+Bash command:
 ```
+SPEC_OPTS='--tag acceptance' SESSION=meterpreter/php SESSION_MODULE_TEST=post/test/unix bundle exec rspec './spec/acceptance/meterpreter_spec.rb'
+```
+
+Powershell command:
+```
+$env:SPEC_OPTS='--tag acceptance'; $env:SPEC_HELPER_LOAD_METASPLOIT=$false; $env:SESSION = 'meterpreter/php'; bundle exec rspec './spec/acceptance/meterpreter_spec.rb'
+```
+
+Session types can be specified via the `SESSION` argument. Meterpreter and command shell are support and use the following notation:
+- SESSION=meterpreter/php
+- SESSION=command_shell/php
+
+### Postgres
+
+Run a target:
+
+```
+docker run -it --rm --publish 127.0.0.1:9000:5432 -e POSTGRES_PASSWORD=password postgres:14
+```
+
+Run the test suite:
+
+```
+POSTGRES_RPORT=9000 SPEC_OPTS='--tag acceptance' SPEC_HELPER_LOAD_METASPLOIT=false bundle exec rspec ./spec/acceptance/postgres_spec.rb
+```
+
+### MySQL
+
+Run a target:
+
+```
+docker run -it --rm --publish 127.0.0.1:9001:3306 -e MYSQL_ROOT_PASSWORD=password mariadb:11.2.2
+```
+
+Run the test suite:
+
+```
+MYSQL_RPORT=9000 SPEC_OPTS='--tag acceptance' SPEC_HELPER_LOAD_METASPLOIT=false bundle exec rspec ./spec/acceptance/mysql_spec.rb
+```
+
+### MSSQL
+
+Run a target:
+
+```
+docker run -e "ACCEPT_EULA=Y" -e 'MSSQL_SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2019-latest
+```
+
+Run the test suite:
+
+```
+MSSQL_RPORT=1433 SPEC_OPTS='--tag acceptance' SPEC_HELPER_LOAD_METASPLOIT=false bundle exec rspec ./spec/acceptance/mssql_spec.rb
+```
+
+### SMB
+
+Build the Docker image:
+
+```
+docker compose build
+```
+
+Run a target:
+
+```
+docker compose up -d --wait
+```
+
+Run the test suite:
+
+```
+SMB_USERNAME=acceptance_tests_user SMB_PASSWORD=acceptance_tests_password SPEC_OPTS='--tag acceptance' SPEC_HELPER_LOAD_METASPLOIT=false bundle exec rspec ./spec/acceptance/smb_spec.rb
+```
+
+Shut down the container:
+```
+docker compose down
+```
+
+#### Allure reports
 
 Generate allure reports locally:
 
@@ -55,6 +136,20 @@ tar -zxvf allure-$VERSION.tgz -C .
 # Serve the assets from the host machine, available at http://127.0.0.1:8000
 cd allure-report
 ruby -run -e httpd . -p 8000
+```
+
+#### Support Matrix generation
+
+You can download the data from an existing Github job run:
+
+```
+ids=(6099944525); for id in $ids; do echo $id; gh run download $id --repo rapid7/metasploit-framework --dir gh-actions-$id ; done
+```
+
+Then generate the report using the allure data:
+
+```
+bundle exec ruby tools/dev/report_generation/support_matrix/generate.rb --allure-data /path/to/gh-actions-$id > ./support_matrix.html
 ```
 
 ### Debugging

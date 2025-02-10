@@ -186,7 +186,11 @@ NAVIGATION_CONFIG = [
               },
               {
                 path: '../../documentation/modules/auxiliary/admin/ldap/rbcd.md',
-                title: 'RBCD - Resource-based constrained delegation'
+                title: 'Resource-based constrained delegation (RBCD)'
+              },
+              {
+                path: 'kerberos/unconstrained_delegation.md',
+                title: 'Unconstrained delegation'
               }
             ]
           },
@@ -272,6 +276,10 @@ NAVIGATION_CONFIG = [
           {
             path: 'How-to-use-msfvenom.md',
             nav_order: 7
+          },
+          {
+            path: 'Managing-Sessions.md',
+            nav_order: 8
           }
         ]
       },
@@ -316,6 +324,9 @@ NAVIGATION_CONFIG = [
         children: [
           {
             path: 'Metasploit-Web-Service.md'
+          },
+          {
+            path: 'How-to-Configure-DNS.md'
           },
           {
             title: 'Meterpreter',
@@ -434,6 +445,9 @@ NAVIGATION_CONFIG = [
           {
             path: 'How-to-use-the-Favorite-command.md'
           },
+          {
+            path: 'How-to-use-Metasploit-with-ngrok.md'
+          },
         ]
       },
     ]
@@ -547,6 +561,9 @@ NAVIGATION_CONFIG = [
               {
                 path: 'How-to-check-Microsoft-patch-levels-for-your-exploit.md'
               },
+              {
+                path: "How-to-write-a-cmd-injection-module.md"
+              }
             ]
           },
           {
@@ -838,6 +855,9 @@ NAVIGATION_CONFIG = [
           },
           {
             path: 'Loading-Test-Modules.md'
+          },
+          {
+            path: 'Payload-Testing.md'
           },
           {
             path: 'Measuring-Metasploit-Performance.md'

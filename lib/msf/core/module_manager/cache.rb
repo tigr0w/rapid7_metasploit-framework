@@ -74,8 +74,6 @@ module Msf::ModuleManager::Cache
   # @return [false] if a module with the given type and reference name does not exist in the cache.
   # @return (see Msf::Modules::Loader::Base#load_module)
   def load_cached_module(type, reference_name, cache_type: Msf::ModuleManager::Cache::MEMORY)
-    loaded = false
-
     case cache_type
     when Msf::ModuleManager::Cache::FILESYSTEM
       cached_metadata = Msf::Modules::Metadata::Cache.instance.get_module_reference(type: type, reference_name: reference_name)
@@ -94,6 +92,11 @@ module Msf::ModuleManager::Cache
       raise ArgumentError, "#{cache_type} is not a valid cache type."
     end
 
+    try_load_module(parent_path, reference_name, type, cached_metadata: cached_metadata)
+  end
+
+  def try_load_module(parent_path, reference_name, type, cached_metadata: nil)
+    loaded = false
     # XXX borked
     loaders.each do |loader|
       next unless cached_metadata || loader.loadable_module?(parent_path, type, reference_name)
@@ -151,7 +154,7 @@ module Msf::ModuleManager::Cache
 
   # Return a module info from Msf::Modules::Metadata::Obj.
   #
-  # @note Also sets module_set(module_type)[module_reference_name] to Msf::SymbolicModule if it is not already set.
+  # @note Also sets module_set(module_type)[module_reference_name] to nil if it is not already set.
   #
   # @return [Hash{String => Hash{Symbol => Object}}] Maps path (Mdm::Module::Detail#file) to module information.  Module
   #   information is a Hash derived from Mdm::Module::Detail.  It includes :modification_time, :parent_path, :type,
@@ -190,14 +193,12 @@ module Msf::ModuleManager::Cache
       # which would potentially call {Msf::ModuleSet#create}.
       next unless typed_module_set
       unless typed_module_set.has_key?(reference_name)
-        typed_module_set[reference_name] = Msf::SymbolicModule
+        typed_module_set[reference_name] = nil
       end
     end
 
     self.module_info_by_path
   end
-
-  private
 
   def get_parent_path(module_path, type)
     # The load path is assumed to be the next level above the type directory
